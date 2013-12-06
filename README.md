@@ -4,7 +4,7 @@ Bigdata-final
 Entity Linking with co-ranking
 
 ### Build
-	$ mvn compile
+	$ mvn package
 
 ### Run
 	$ hadoop jar target/entlink-0.1-job.jar INPUT OUTPUT
