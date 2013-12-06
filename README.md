@@ -11,4 +11,4 @@ Entity Linking with co-ranking
 
 ### Run with hadoop streaming
 
-	$ hadoop jar HADOOP_STREAMING_JAR -D xmlinput.start='<page>' -D xmlinput.end='</page>' -libjars XmlInputFormat.jar -inputformat XmlInputFormat.XmlInputFormat -input INPUT -output OUTPUT -mapper MAPPER -file MAPPER -reducer REDUCER -file REDUCER
+	$ hadoop jar HADOOP_STREAMING_JAR -D xmlinput.start='<page>' -D xmlinput.end='</page>' -libjars mahout-examples-0.2.jar -inputformat org.apache.mahout.classifier.bayes.XmlInputFormat -input INPUT -output OUTPUT -mapper MAPPER -file MAPPER -reducer REDUCER -file REDUCER
