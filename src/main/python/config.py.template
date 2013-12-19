@@ -1,0 +1,14 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import multiprocessing
+
+master = 'HOST'
+spark_port = 7077
+spark_master = 'spark://%s:%d' % (master, spark_port)
+
+hdfs_port = 9000
+hdfs_master = 'hdfs://%s:%d' % (master, hdfs_port)
+
+starbase_port = 8000
+
+nsplit = nmultiprocessing.cpu_count()
