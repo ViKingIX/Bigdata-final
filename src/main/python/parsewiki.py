@@ -60,7 +60,7 @@ if __name__ == '__main__':
 		print >> sys.stderr, __file__, 'needs at least 1 argument!'
 		exit(1)
 	conn = starbase.Connection(master, starbase_port)
-	sc = SparkContext(spark_master, 'parselinks')
+	sc = SparkContext(spark_master, 'parselinks', pyFiles=['config.py'])
 	dat = sc.textFile(hdfs_master + sys.argv[1], nsplit)
 	radj_list = dat.flatMap(parsewiki) \
 		       .filter(None) \
