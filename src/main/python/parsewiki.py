@@ -64,7 +64,7 @@ if __name__ == '__main__':
 	dat = sc.textFile(hdfs_master + sys.argv[1], nsplit)
 	radj_list = dat.flatMap(parsewiki) \
 		       .filter(None) \
-		       .groupByKey()
+		       .groupByKey(nsplit)
 	if argc > 2:
 		radj_list.saveAsTextFile(hdfs_master + sys.argv[2])
 	else:
