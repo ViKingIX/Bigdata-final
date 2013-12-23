@@ -25,5 +25,5 @@ if __name__ == '__main__':
 	if len(sys.argv) > 2:
 		cands.saveAsTextFile(hdfs_master + '/name_mention_cands')
 	else:
-		print '\n'.join(cands.collect())
+		print '\n'.join(map(lambda s: s.encode('utf8'), cands.collect()))
 	exit(0)
