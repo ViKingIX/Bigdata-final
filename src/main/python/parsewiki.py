@@ -8,9 +8,11 @@ from pyspark import SparkContext
 import starbase
 from config import *
 
+taglist = ['File', 'media', 'Image', 'User_Talk', 'User talk', 'User', 'Talk']
+
 # text is the text section of a wiki page
 # returns a list of links' title
-def parselinks(title, text):
+def parselinks(title, text, renamed = False):
 	# check redirected page
 	res = re.match(r'#REDIRECT \[\[(.*?)(?:#.*?)?\]\]', text)
 	if res:
@@ -21,12 +23,26 @@ def parselinks(title, text):
 	links = set(re.findall(r'\[\[([^\]].*?)\]\]', text))
 
 	# filter out links to other language, file, media links
-	taglist = ['File', 'media', 'Image', 'User talk']
-	links = filter(lambda link: not ':' in link or not (link.split(':')[0].islower() or link.split(':')[0] in taglist or link.split(':')[1] in taglist), links)
+	links = filter(lambda link: not (':' in link and (any(field in taglist for field in link.split(':')[:2]) or re.match(r'[a-z]{2,3}:', link))), links)
 
 	# process renamed links
 	# ex: [[link|]], [[link|link_name]]
-	links = map(lambda link: link.split('|')[0] if '|' in link else link, links)
+	def process_renamed(link, renamed = False):
+		if not '|' in link:
+			return link
+		fields = link.split('|')
+		real = fields[0]
+		display = ''
+		if len(fields) > 1:
+			display = fields[1]
+		if not display and renamed:	# auto renamed link
+			for delim in ['(', ',']:
+				if delim in display:
+					display = display.split(delim)[0].rstrip()
+			if ':' in display:
+				display = display.split(':')[1].lstrip()
+		return display if renamed else real
+	links = map(lambda link: process_renamed(link, renamed), links)
 
 	# process link to section
 	# ex: [[link#section]], [[#section]]
@@ -45,9 +61,8 @@ def parsewiki(line):
 		text = soup.findChild('text').text
 	except Exception:
 		print >> sys.stderr, 'bs error on', re.search(r'<title>(.*?)</title>', line).group(1).encode('utf8')
-	# skip if the page is a user page, user talk page, etc
-	taglist = ['File', 'media', 'Image', 'User talk']
-	if ':' in title and title.split(':')[0] in taglist:
+	# skip if the page is a user page, media page, etc
+	if ':' in title and not any(field in taglist for field in title.split(':')[:2]):
 		return []
 	links = parselinks(title, text)
 	if links is None:	# skip redirected page
@@ -66,8 +81,8 @@ if __name__ == '__main__':
 		       .filter(None) \
 		       .groupByKey(nsplit)
 	if argc > 2:
-		radj_list.saveAsTextFile(hdfs_master + sys.argv[2])
+		radj_list.map(lambda (title, pids): '%s\t%s' % (title, ' '.join(map(str, pids)))).saveAsTextFile(hdfs_master + sys.argv[2])
 	else:
-		for title, pids in radj_list.collect()[:5]:
-			print title.encode('utf8'), pids
+		for title, pids in radj_list.collect():
+			print '%s\t%s' % (title.encode('utf8'), pids)
 	exit(0)
