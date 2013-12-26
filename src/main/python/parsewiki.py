@@ -46,7 +46,7 @@ def parselinks(title, text, renamed = False):
 
 	# process link to section
 	# ex: [[link#section]], [[#section]]
-	links = map(lambda link: title if len(link) > 0 and link[0] == '#' else link.split('#')[0] if '#' in link else link, links)
+	links = map(lambda link: title if link and link[0] == '#' else link.split('#')[0] if '#' in link else link, links)
 	
 	return links
 
