@@ -8,7 +8,6 @@ from operator import itemgetter
 from bs4 import BeautifulSoup as bs
 from pyspark import SparkContext
 from parsewiki import parselinks
-from name_mention import gen_name_mention_cands
 from config import *
 
 def parselinks_kp(page, cands):
@@ -18,11 +17,11 @@ def parselinks_kp(page, cands):
 		text = soup.findChild('text').text
 	except Exception:
 		return []
-	links = parselinks(title, text)
+	links = parselinks(title, text, True)
+	# returns an empty list if redirected
 	if links is None:
 		return []
-	# True for lowercased ngrams
-	cands_page = gen_name_mention_cands(text, True)
+	cands_page = ' '.join(map(lambda s: s.strip(string.punctuation).lower(), text.split()))
 	cands = filter(lambda cand: cand in cands_page, cands)
 	return map(lambda cand: (cand, (int(cand in links), 1)), cands)
 
