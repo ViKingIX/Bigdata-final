@@ -5,6 +5,7 @@ import math
 from itertools import groupby
 import operator
 from operator import itemgetter
+import string
 from bs4 import BeautifulSoup as bs
 from pyspark import SparkContext
 from parsewiki import parselinks
@@ -26,8 +27,9 @@ def parselinks_kp(page, cands):
 	return map(lambda cand: (cand, (int(cand in links), 1)), cands)
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print >> sys.stderr, __file__, 'needs 1 argument!'
+	argc = len(sys.argv)
+	if argc < 2:
+		print >> sys.stderr, __file__, 'needs at least 1 argument!'
 		exit(1)
 	sc = SparkContext(spark_master, __file__, pyFiles=['parsewiki.py', 'name_mention.py', 'config.py'])
 	name_mention_cands = sc.textFile(hdfs_master + '/name_mention_cands').map(lambda line: line.lower()).collect()
@@ -39,12 +41,20 @@ if __name__ == '__main__':
 		.reduceByKey(lambda (nkey1, noccur1), (nkey2, noccur2): (nkey1 + nkey2, noccur1 + noccur2)) \
 		.mapValues(lambda (nkey, noccur): float(nkey) / noccur if noccur > 0 else 0) \
 		.filter(lambda (cand, kp): kp > 0)
-	kp.map(lambda (cand, kp): '%s\t%f' % (cand, kp)) \
-	  .saveAsTextFile(hdfs_master + '/keyphraseness')
+	if argc > 2:
+		kp.map(lambda (cand, kp): '%s\t%f' % (cand, kp)) \
+		  .saveAsTextFile(hdfs_master + sys.argv[2])
+	else:
+		for cand, kp in kp.collect():
+			print '%s\t%f' % (cand, kp)
 
 	kpstep = 0.0001
 	hist = kp.map(lambda (cand, kp): (math.floor(kp / kpstep) * kpstep, 1)) \
 		 .reduceByKey(operator.add)
-	hist.map(lambda (kp, count): '%f\t%d' % (kp, count)) \
-	    .saveAsTextFile(hdfs_master + '/keyphraseness_hist')
+	if argc > 3:
+		hist.map(lambda (kp, count): '%f\t%d' % (kp, count)) \
+		    .saveAsTextFile(hdfs_master + sys.argv[3])
+	else:
+		for kp, count in hist.collect():
+			print '%f\t%d' % (kp, count)
 	exit(0)
